@@ -15,6 +15,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String deleteId = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +30,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Expanded(child: memoBuilder()),
+          Expanded(child: memoBuilder(context)),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -58,7 +59,44 @@ class _MyHomePageState extends State<MyHomePage> {
     return await sd.memos();
   }
 
-  Widget memoBuilder() {
+  Future<void> deleteMemo(String id) async {
+    DBHelper sd = DBHelper();
+    await sd.deleteMemo(id);
+  }
+
+  void showAlertDialog(BuildContext context) async {
+    String result = await showDialog(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('삭제 경고'),
+          content: Text('정말 삭제하시겠습니까? \n 삭제된 메모는 복구되지 않습니다.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('삭제'),
+              onPressed: (){
+                Navigator.pop(context, "삭제");
+                setState(() {
+                  deleteMemo(deleteId);
+                });
+                deleteId = '';
+              },
+            ),
+            FlatButton(
+              child: Text('취소'),
+              onPressed: (){
+                Navigator.pop(context, "취소");
+                deleteId = '';
+              },
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  Widget memoBuilder(BuildContext parentContext) {
     return FutureBuilder(
       builder: (context, projectSnap) {
         if ((projectSnap.data as List).isEmpty) {
@@ -77,50 +115,61 @@ class _MyHomePageState extends State<MyHomePage> {
           itemCount: (projectSnap.data as List).length,
           itemBuilder: (context, index) {
             Memo memo = (projectSnap.data as List)[index];
-            return Container(
-              margin: EdgeInsets.all(5),
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(
-                    color: Colors.blue,
-                    width: 1,
-                  ),
-                  boxShadow: [BoxShadow(color: Colors.lightBlue, blurRadius: 2)],
-                  borderRadius: BorderRadius.circular(12)),
-              alignment: Alignment.center,
-              height: 100,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Text(
-                        memo.title,
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w500),
-                      ),
-                      Text(
-                        memo.text,
-                        style: TextStyle(fontSize: 15),
-                      ),
+            return InkWell(
+              onTap: (){},
+              onLongPress: (){
+                setState(() {
+                  deleteId = memo.id;
+                  showAlertDialog(parentContext);
+                });
+              },
+              child: Container(
+                margin: EdgeInsets.all(5),
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                    color: Color.fromRGBO(240, 240, 240, 1),
+                    border: Border.all(
+                      color: Colors.blue,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: Colors.lightBlue, blurRadius: 2)
                     ],
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Text(
-                        "최종 수정 시간: " + memo.editTime.split('.')[0],
-                        style: TextStyle(fontSize: 11),
-                        textAlign: TextAlign.end,
-                      ),
-                    ],
-                  )
-                ],
+                    borderRadius: BorderRadius.circular(12)),
+                alignment: Alignment.center,
+                height: 100,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          memo.title,
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          memo.text,
+                          style: TextStyle(fontSize: 15),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          "최종 수정 시간: " + memo.editTime.split('.')[0],
+                          style: TextStyle(fontSize: 11),
+                          textAlign: TextAlign.end,
+                        ),
+                      ],
+                    )
+                  ],
+                ),
               ),
             );
           },
