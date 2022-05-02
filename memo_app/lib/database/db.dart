@@ -85,5 +85,23 @@ class DBHelper {
       whereArgs: [id],
     );
   }
+
+  Future<List<Memo>> findMemo(String id) async {
+    final db = await database;
+
+    // 모든 Memo를 얻기 위해 테이블에 질의합니다.
+    final List<Map<String, dynamic>> maps = await db.query('memos', where: 'id = ?', whereArgs: [id]);
+
+    // List<Map<String, dynamic>를 List<Memo>으로 변환합니다.
+    return List.generate(maps.length, (i) {
+      return Memo(
+        id: maps[i]['id'],
+        title: maps[i]['title'],
+        text: maps[i]['text'],
+        createTime: maps[i]['createTime'],
+        editTime: maps[i]['editTime'],
+      );
+    });
+  }
 }
 
